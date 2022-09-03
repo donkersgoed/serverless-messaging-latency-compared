@@ -5,6 +5,8 @@ from aws_cdk import (
     Stack,
 )
 from constructs import Construct
+from serverless_messaging_latency_compared.constructs.sqs_test import SqsTest
+from serverless_messaging_latency_compared.constructs.sns_test import SnsTest
 
 
 class ServerlessMessagingLatencyComparedStack(Stack):
@@ -14,4 +16,5 @@ class ServerlessMessagingLatencyComparedStack(Stack):
         """Construct a new ServerlessMessagingLatencyComparedStack."""
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        SqsTest(scope=self, construct_id="SqsTest")
+        SnsTest(scope=self, construct_id="SnsTest")
