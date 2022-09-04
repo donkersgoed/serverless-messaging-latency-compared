@@ -42,6 +42,7 @@ class KinesisTest(Construct):
             scope=self,
             id="ConsumerFunction",
             code=lambda_.Code.from_asset(path="lambda_/functions/kinesis/consumer/"),
+            environment={"MESSAGING_TYPE": "Kinesis"},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,

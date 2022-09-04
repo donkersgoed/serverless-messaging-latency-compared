@@ -1,8 +1,7 @@
 # Third party imports
 from aws_cdk import (
     aws_lambda as lambda_,
-    aws_sns as sns,
-    aws_sns_subscriptions as sns_subscriptions,
+    aws_sqs as sqs,
 )
 from constructs import Construct
 
@@ -15,17 +14,19 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 )
 
 
-class SnsTest(Construct):
+class SqsFifoTest(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        topic = sns.Topic(scope=self, id="Topic")
+        queue = sqs.Queue(
+            scope=self, id="TestQueue", fifo=True, content_based_deduplication=True
+        )
 
         producer_lambda_function = lambda_.Function(
             scope=self,
             id="ProducerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sns/producer/"),
-            environment={"SNS_TOPIC_ARN": topic.topic_arn, "IS_FIFO": "false"},
+            code=lambda_.Code.from_asset(path="lambda_/functions/sqs/producer/"),
+            environment={"SQS_QUEUE_URL": queue.queue_url, "IS_FIFO": "true"},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
@@ -37,13 +38,13 @@ class SnsTest(Construct):
             lambda_function=producer_lambda_function,
         )
 
-        topic.grant_publish(producer_lambda_function)
+        queue.grant_send_messages(producer_lambda_function)
 
         consumer_lambda_function = lambda_.Function(
             scope=self,
             id="ConsumerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sns/consumer/"),
-            environment={"MESSAGING_TYPE": "SNS Standard"},
+            code=lambda_.Code.from_asset(path="lambda_/functions/sqs/consumer/"),
+            environment={"MESSAGING_TYPE": "SQS FIFO"},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
@@ -54,8 +55,10 @@ class SnsTest(Construct):
             lambda_function=consumer_lambda_function,
         )
 
-        topic.add_subscription(
-            sns_subscriptions.LambdaSubscription(fn=consumer_lambda_function)
+        queue.grant_consume_messages(consumer_lambda_function)
+
+        consumer_lambda_function.add_event_source_mapping(
+            id="QueueESM", batch_size=1, event_source_arn=queue.queue_arn
         )
 
         Invoker(

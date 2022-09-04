@@ -8,7 +8,9 @@ from constructs import Construct
 
 # Local application/library specific imports
 from serverless_messaging_latency_compared.constructs.sqs_test import SqsTest
+from serverless_messaging_latency_compared.constructs.sqs_fifo_test import SqsFifoTest
 from serverless_messaging_latency_compared.constructs.sns_test import SnsTest
+from serverless_messaging_latency_compared.constructs.sns_fifo_test import SnsFifoTest
 from serverless_messaging_latency_compared.constructs.kinesis_test import KinesisTest
 from serverless_messaging_latency_compared.constructs.sfn_standard_test import (
     SfnStandardTest,
@@ -29,7 +31,9 @@ class ServerlessMessagingLatencyComparedStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         SqsTest(scope=self, construct_id="SqsTest")
+        SqsFifoTest(scope=self, construct_id="SqsFifoTest")
         SnsTest(scope=self, construct_id="SnsTest")
+        SnsFifoTest(scope=self, construct_id="SnsFifoTest")
         KinesisTest(scope=self, construct_id="KinesisTest")
         SfnStandardTest(scope=self, construct_id="SfnStandardTest")
         SfnExpressTest(scope=self, construct_id="SfnExpressTest")

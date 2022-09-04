@@ -1,9 +1,11 @@
 import json
+import os
 from time import time, time_ns
 
 execution_ids = []
 
 AWS_EMF_KEY = "_aws"  # change this to disable EMF
+MESSAGING_TYPE = os.environ["MESSAGING_TYPE"]
 
 
 def event_handler(event, context):
@@ -42,7 +44,7 @@ def event_handler(event, context):
                             }
                         ],
                     },
-                    "Messaging Type": "SQS Standard",
+                    "Messaging Type": MESSAGING_TYPE,
                     "Latency": duration / 1000 / 1000,  # ns to ms
                     "Cold Start": str(
                         consumer_cold_start or producer_cold_start,
