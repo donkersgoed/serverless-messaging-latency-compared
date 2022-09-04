@@ -10,6 +10,12 @@ from constructs import Construct
 from serverless_messaging_latency_compared.constructs.sqs_test import SqsTest
 from serverless_messaging_latency_compared.constructs.sns_test import SnsTest
 from serverless_messaging_latency_compared.constructs.kinesis_test import KinesisTest
+from serverless_messaging_latency_compared.constructs.sfn_standard_test import (
+    SfnStandardTest,
+)
+from serverless_messaging_latency_compared.constructs.sfn_express_test import (
+    SfnExpressTest,
+)
 
 
 class ServerlessMessagingLatencyComparedStack(Stack):
@@ -22,3 +28,5 @@ class ServerlessMessagingLatencyComparedStack(Stack):
         SqsTest(scope=self, construct_id="SqsTest")
         SnsTest(scope=self, construct_id="SnsTest")
         KinesisTest(scope=self, construct_id="KinesisTest")
+        SfnStandardTest(scope=self, construct_id="SfnStandardTest")
+        SfnExpressTest(scope=self, construct_id="SfnExpressTest")
