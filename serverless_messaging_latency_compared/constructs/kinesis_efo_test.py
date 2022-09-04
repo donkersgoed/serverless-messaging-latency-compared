@@ -1,7 +1,9 @@
 # Third party imports
 from aws_cdk import (
+    Fn,
     aws_lambda as lambda_,
     aws_kinesis as kds,
+    aws_iam as iam,
 )
 from constructs import Construct
 
@@ -14,7 +16,7 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 )
 
 
-class KinesisTest(Construct):
+class KinesisEfoTest(Construct):
     def __init__(
         self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
     ) -> None:
@@ -22,6 +24,12 @@ class KinesisTest(Construct):
         self.messaging_type = messaging_type
 
         stream = kds.Stream(scope=self, id="TestStream", shard_count=1)
+        kds_consumer = kds.CfnStreamConsumer(
+            scope=self,
+            id="EfoConsumer",
+            consumer_name="consumer",
+            stream_arn=stream.stream_arn,
+        )
 
         producer_lambda_function = lambda_.Function(
             scope=self,
@@ -61,8 +69,16 @@ class KinesisTest(Construct):
         consumer_lambda_function.add_event_source_mapping(
             id="StreamESM",
             batch_size=1,
-            event_source_arn=stream.stream_arn,
+            event_source_arn=kds_consumer.attr_consumer_arn,
             starting_position=lambda_.StartingPosition.LATEST,
+        )
+
+        consumer_lambda_function.role.add_to_principal_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["kinesis:SubscribeToShard"],
+                resources=[kds_consumer.attr_consumer_arn],
+            )
         )
 
         Invoker(

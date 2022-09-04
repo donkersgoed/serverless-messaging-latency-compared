@@ -15,8 +15,11 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 
 
 class SqsFifoTest(Construct):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.messaging_type = messaging_type
 
         queue = sqs.Queue(
             scope=self, id="TestQueue", fifo=True, content_based_deduplication=True
@@ -44,7 +47,7 @@ class SqsFifoTest(Construct):
             scope=self,
             id="ConsumerFunction",
             code=lambda_.Code.from_asset(path="lambda_/functions/sqs/consumer/"),
-            environment={"MESSAGING_TYPE": "SQS FIFO"},
+            environment={"MESSAGING_TYPE": messaging_type},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,

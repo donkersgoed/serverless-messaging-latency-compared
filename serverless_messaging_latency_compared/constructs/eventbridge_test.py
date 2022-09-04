@@ -18,8 +18,11 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 
 
 class EventBridgeTest(Construct):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.messaging_type = messaging_type
 
         consumer_lambda_function = lambda_.Function(
             scope=self,
@@ -27,7 +30,7 @@ class EventBridgeTest(Construct):
             code=lambda_.Code.from_asset(
                 path="lambda_/functions/eventbridge/consumer/"
             ),
-            environment={"MESSAGING_TYPE": "EventBridge"},
+            environment={"MESSAGING_TYPE": messaging_type},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,

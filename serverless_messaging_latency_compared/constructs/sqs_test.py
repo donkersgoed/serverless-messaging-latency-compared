@@ -2,6 +2,7 @@
 from aws_cdk import (
     aws_lambda as lambda_,
     aws_sqs as sqs,
+    aws_cloudwatch as cloudwatch,
 )
 from constructs import Construct
 
@@ -15,8 +16,11 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 
 
 class SqsTest(Construct):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.messaging_type = messaging_type
 
         queue = sqs.Queue(scope=self, id="TestQueue")
 
@@ -42,7 +46,7 @@ class SqsTest(Construct):
             scope=self,
             id="ConsumerFunction",
             code=lambda_.Code.from_asset(path="lambda_/functions/sqs/consumer/"),
-            environment={"MESSAGING_TYPE": "SQS Standard"},
+            environment={"MESSAGING_TYPE": messaging_type},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,

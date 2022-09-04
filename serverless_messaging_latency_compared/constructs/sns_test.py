@@ -16,8 +16,11 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 
 
 class SnsTest(Construct):
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        self.messaging_type = messaging_type
 
         topic = sns.Topic(scope=self, id="Topic")
 
@@ -43,7 +46,7 @@ class SnsTest(Construct):
             scope=self,
             id="ConsumerFunction",
             code=lambda_.Code.from_asset(path="lambda_/functions/sns/consumer/"),
-            environment={"MESSAGING_TYPE": "SNS Standard"},
+            environment={"MESSAGING_TYPE": messaging_type},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
