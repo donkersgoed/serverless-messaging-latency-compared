@@ -1,16 +1,14 @@
 # Third party imports
 from aws_cdk import (
-    Fn,
     aws_lambda as lambda_,
     aws_sqs as sqs,
-    aws_logs as logs,
 )
 from constructs import Construct
 
+# Local application/library specific imports
 from serverless_messaging_latency_compared.constructs.lambda_log_group import (
     LambdaLogGroup,
 )
-
 from serverless_messaging_latency_compared.constructs.invoker import (
     Invoker,
 )

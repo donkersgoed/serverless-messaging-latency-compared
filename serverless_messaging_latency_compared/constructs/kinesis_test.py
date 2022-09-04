@@ -1,8 +1,7 @@
 # Third party imports
 from aws_cdk import (
     aws_lambda as lambda_,
-    aws_sns as sns,
-    aws_sns_subscriptions as sns_subscriptions,
+    aws_kinesis as kds,
 )
 from constructs import Construct
 
@@ -15,17 +14,17 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 )
 
 
-class SnsTest(Construct):
+class KinesisTest(Construct):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        topic = sns.Topic(scope=self, id="Topic")
+        stream = kds.Stream(scope=self, id="TestStream", shard_count=1)
 
         producer_lambda_function = lambda_.Function(
             scope=self,
             id="ProducerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sns/producer/"),
-            environment={"SNS_TOPIC_ARN": topic.topic_arn},
+            code=lambda_.Code.from_asset(path="lambda_/functions/kinesis/producer/"),
+            environment={"KDS_STREAM_NAME": stream.stream_name},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
@@ -37,12 +36,12 @@ class SnsTest(Construct):
             lambda_function=producer_lambda_function,
         )
 
-        topic.grant_publish(producer_lambda_function)
+        stream.grant_write(producer_lambda_function)
 
         consumer_lambda_function = lambda_.Function(
             scope=self,
             id="ConsumerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sns/consumer/"),
+            code=lambda_.Code.from_asset(path="lambda_/functions/kinesis/consumer/"),
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
@@ -53,8 +52,13 @@ class SnsTest(Construct):
             lambda_function=consumer_lambda_function,
         )
 
-        topic.add_subscription(
-            sns_subscriptions.LambdaSubscription(fn=consumer_lambda_function)
+        stream.grant_read(consumer_lambda_function)
+
+        consumer_lambda_function.add_event_source_mapping(
+            id="StreamESM",
+            batch_size=1,
+            event_source_arn=stream.stream_arn,
+            starting_position=lambda_.StartingPosition.LATEST,
         )
 
         Invoker(
