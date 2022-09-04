@@ -16,6 +16,9 @@ from serverless_messaging_latency_compared.constructs.sfn_standard_test import (
 from serverless_messaging_latency_compared.constructs.sfn_express_test import (
     SfnExpressTest,
 )
+from serverless_messaging_latency_compared.constructs.eventbridge_test import (
+    EventBridgeTest,
+)
 
 
 class ServerlessMessagingLatencyComparedStack(Stack):
@@ -30,3 +33,4 @@ class ServerlessMessagingLatencyComparedStack(Stack):
         KinesisTest(scope=self, construct_id="KinesisTest")
         SfnStandardTest(scope=self, construct_id="SfnStandardTest")
         SfnExpressTest(scope=self, construct_id="SfnExpressTest")
+        EventBridgeTest(scope=self, construct_id="EventBridgeTest")
