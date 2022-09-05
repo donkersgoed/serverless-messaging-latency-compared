@@ -16,14 +16,23 @@ from serverless_messaging_latency_compared.constructs.kinesis_test import Kinesi
 from serverless_messaging_latency_compared.constructs.kinesis_efo_test import (
     KinesisEfoTest,
 )
-from serverless_messaging_latency_compared.constructs.sfn_standard_test import (
-    SfnStandardTest,
+from serverless_messaging_latency_compared.constructs.sfn_standard_async_test import (
+    SfnStandardAsyncTest,
 )
-from serverless_messaging_latency_compared.constructs.sfn_express_test import (
-    SfnExpressTest,
+from serverless_messaging_latency_compared.constructs.sfn_express_async_test import (
+    SfnExpressAsyncTest,
+)
+from serverless_messaging_latency_compared.constructs.sfn_standard_sync_test import (
+    SfnStandardSyncTest,
+)
+from serverless_messaging_latency_compared.constructs.sfn_express_sync_test import (
+    SfnExpressSyncTest,
 )
 from serverless_messaging_latency_compared.constructs.eventbridge_test import (
     EventBridgeTest,
+)
+from serverless_messaging_latency_compared.constructs.ddb_streams_test import (
+    DynamoDbStreamsTest,
 )
 
 
@@ -49,11 +58,25 @@ class ServerlessMessagingLatencyComparedStack(Stack):
         sns_fifo_test = SnsFifoTest(
             scope=self, construct_id="SnsFifoTest", messaging_type="SNS FIFO"
         )
-        sfn_standard_test = SfnStandardTest(
-            scope=self, construct_id="SfnStandardTest", messaging_type="SFN Standard"
+        sfn_standard_async_test = SfnStandardAsyncTest(
+            scope=self,
+            construct_id="SfnStandardAsyncTest",
+            messaging_type="Step Functions Standard (async)",
         )
-        sfn_express_test = SfnExpressTest(
-            scope=self, construct_id="SfnExpressTest", messaging_type="SFN Express"
+        sfn_standard_sync_test = SfnStandardSyncTest(
+            scope=self,
+            construct_id="SfnStandardSyncTest",
+            messaging_type="Step Functions Standard (sync)",
+        )
+        sfn_express_async_test = SfnExpressAsyncTest(
+            scope=self,
+            construct_id="SfnExpressAsyncTest",
+            messaging_type="Step Functions Express (async)",
+        )
+        sfn_express_sync_test = SfnExpressSyncTest(
+            scope=self,
+            construct_id="SfnExpressSyncTest",
+            messaging_type="Step Functions Express (sync)",
         )
         event_bridge_test = EventBridgeTest(
             scope=self, construct_id="EventBridgeTest", messaging_type="EventBridge"
@@ -66,16 +89,24 @@ class ServerlessMessagingLatencyComparedStack(Stack):
             construct_id="KinesisEfoTest",
             messaging_type="Kinesis Enhanced Fan Out",
         )
+        ddb_streams_test = DynamoDbStreamsTest(
+            scope=self,
+            construct_id="DynamoDbStreamsTest",
+            messaging_type="DynamoDB Streams",
+        )
         self.dashboard_obj = {"widgets": []}
         self.add_widgets_to_dashboard(sqs_test.messaging_type)
         self.add_widgets_to_dashboard(sqs_fifo_test.messaging_type)
         self.add_widgets_to_dashboard(sns_test.messaging_type)
         self.add_widgets_to_dashboard(sns_fifo_test.messaging_type)
-        self.add_widgets_to_dashboard(sfn_standard_test.messaging_type)
-        self.add_widgets_to_dashboard(sfn_express_test.messaging_type)
+        self.add_widgets_to_dashboard(sfn_standard_async_test.messaging_type)
+        self.add_widgets_to_dashboard(sfn_standard_sync_test.messaging_type)
+        self.add_widgets_to_dashboard(sfn_express_async_test.messaging_type)
+        self.add_widgets_to_dashboard(sfn_express_sync_test.messaging_type)
         self.add_widgets_to_dashboard(event_bridge_test.messaging_type)
         self.add_widgets_to_dashboard(kinesis_test.messaging_type)
         self.add_widgets_to_dashboard(kinesis_efo_test.messaging_type)
+        self.add_widgets_to_dashboard(ddb_streams_test.messaging_type)
         cloudwatch.CfnDashboard(
             scope=self, id="Dashboard", dashboard_body=json.dumps(self.dashboard_obj)
         )
@@ -101,7 +132,7 @@ class ServerlessMessagingLatencyComparedStack(Stack):
                 "False",
                 {
                     "yAxis": "left",
-                    "label": f"{messaging_type} P{percentile} Latency",
+                    "label": f"P{percentile} Latency",
                     "stat": f"p{percentile}",
                     "id": f"m{i}",
                 },

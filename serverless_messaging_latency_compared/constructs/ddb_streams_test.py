@@ -1,8 +1,7 @@
 # Third party imports
 from aws_cdk import (
     aws_lambda as lambda_,
-    aws_stepfunctions as sfn,
-    aws_stepfunctions_tasks as sfn_tasks,
+    aws_dynamodb as ddb,
 )
 from constructs import Construct
 
@@ -15,7 +14,7 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 )
 
 
-class SfnExpressTest(Construct):
+class DynamoDbStreamsTest(Construct):
     def __init__(
         self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
     ) -> None:
@@ -25,7 +24,7 @@ class SfnExpressTest(Construct):
         consumer_lambda_function = lambda_.Function(
             scope=self,
             id="ConsumerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sfn/consumer/"),
+            code=lambda_.Code.from_asset(path="lambda_/functions/ddb/consumer/"),
             environment={"MESSAGING_TYPE": messaging_type},
             memory_size=3072,
             handler="index.event_handler",
@@ -37,23 +36,18 @@ class SfnExpressTest(Construct):
             lambda_function=consumer_lambda_function,
         )
 
-        state_machine = sfn.StateMachine(
+        table = ddb.Table(
             scope=self,
-            id="TestMachine",
-            definition=sfn_tasks.LambdaInvoke(
-                scope=self,
-                id=f"Lambda Invocation",
-                lambda_function=consumer_lambda_function,
-                invocation_type=sfn_tasks.LambdaInvocationType.EVENT,
-            ),
-            state_machine_type=sfn.StateMachineType.EXPRESS,
+            id="Table",
+            partition_key=ddb.Attribute(name="PK", type=ddb.AttributeType.STRING),
+            stream=ddb.StreamViewType.NEW_IMAGE,
         )
 
         producer_lambda_function = lambda_.Function(
             scope=self,
             id="ProducerFunction",
-            code=lambda_.Code.from_asset(path="lambda_/functions/sfn/producer/"),
-            environment={"STATE_MACHINE_ARN": state_machine.state_machine_arn},
+            code=lambda_.Code.from_asset(path="lambda_/functions/ddb/producer/"),
+            environment={"DDB_TABLE_NAME": table.table_name},
             memory_size=3072,
             handler="index.event_handler",
             runtime=lambda_.Runtime.PYTHON_3_9,
@@ -65,7 +59,16 @@ class SfnExpressTest(Construct):
             lambda_function=producer_lambda_function,
         )
 
-        state_machine.grant_start_execution(producer_lambda_function)
+        table.grant_read_write_data(producer_lambda_function)
+
+        table.grant_stream_read(consumer_lambda_function)
+
+        consumer_lambda_function.add_event_source_mapping(
+            id="StreamESM",
+            batch_size=1,
+            event_source_arn=table.table_stream_arn,
+            starting_position=lambda_.StartingPosition.LATEST,
+        )
 
         Invoker(
             scope=self, construct_id="Invoker", lambda_function=producer_lambda_function

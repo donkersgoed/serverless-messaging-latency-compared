@@ -15,7 +15,7 @@ from serverless_messaging_latency_compared.constructs.invoker import (
 )
 
 
-class SfnStandardTest(Construct):
+class SfnExpressSyncTest(Construct):
     def __init__(
         self, scope: Construct, construct_id: str, messaging_type: str, **kwargs
     ) -> None:
@@ -44,9 +44,9 @@ class SfnStandardTest(Construct):
                 scope=self,
                 id=f"Lambda Invocation",
                 lambda_function=consumer_lambda_function,
-                invocation_type=sfn_tasks.LambdaInvocationType.EVENT,
+                invocation_type=sfn_tasks.LambdaInvocationType.REQUEST_RESPONSE,
             ),
-            state_machine_type=sfn.StateMachineType.STANDARD,
+            state_machine_type=sfn.StateMachineType.EXPRESS,
         )
 
         producer_lambda_function = lambda_.Function(
